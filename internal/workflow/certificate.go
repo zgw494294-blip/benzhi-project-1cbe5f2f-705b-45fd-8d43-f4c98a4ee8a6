@@ -17,12 +17,16 @@ func (s *Service) IssueCertificate(batchID string, meta CommandMeta) (*domain.Di
 	if err != nil {
 		return nil, err
 	}
+	findingsDigest, err := batch.FindingsDigest()
+	if err != nil {
+		return nil, err
+	}
 	auditDigest := s.repo.LastAuditDigest(batch.ID)
 	id, err := randomID("certificate")
 	if err != nil {
 		return nil, err
 	}
-	c := domain.AcceptanceCertificate{ID: id, BatchID: batch.ID, BatchVersion: batch.Version + 1, ManifestDigest: manifestDigest, AuditDigest: auditDigest, RuleSetVersion: quality.RuleSetVersion, IssuedBy: meta.Actor, IssuedAt: s.now().UTC()}
+	c := domain.AcceptanceCertificate{ID: id, BatchID: batch.ID, BatchVersion: batch.Version + 1, ManifestDigest: manifestDigest, FindingsDigest: findingsDigest, AuditDigest: auditDigest, RuleSetVersion: quality.RuleSetVersion, IssuedBy: meta.Actor, IssuedAt: s.now().UTC()}
 	c.CertificateDigest, err = domain.StableDigest(domain.CertificateContent(c))
 	if err != nil {
 		return nil, err
@@ -46,11 +50,15 @@ func (s *Service) VerifyCertificate(batchID string) (CertificateVerification, er
 	if err != nil {
 		return CertificateVerification{}, err
 	}
+	findingsDigest, err := batch.FindingsDigest()
+	if err != nil {
+		return CertificateVerification{}, err
+	}
 	digest, err := domain.StableDigest(domain.CertificateContent(c))
 	if err != nil {
 		return CertificateVerification{}, err
 	}
-	valid := digest == c.CertificateDigest && manifestDigest == c.ManifestDigest && c.BatchID == batch.ID && c.BatchVersion == batch.Version
+	valid := digest == c.CertificateDigest && manifestDigest == c.ManifestDigest && findingsDigest == c.FindingsDigest && c.BatchID == batch.ID && c.BatchVersion == batch.Version
 	message := "凭据内容、文件清单与摘要一致"
 	if !valid {
 		message = "凭据或保存文件清单摘要不一致"

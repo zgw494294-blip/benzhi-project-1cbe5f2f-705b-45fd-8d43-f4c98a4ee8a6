@@ -100,6 +100,7 @@ type AcceptanceCertificate struct {
 	BatchID           string    `json:"batchID"`
 	BatchVersion      uint64    `json:"batchVersion"`
 	ManifestDigest    string    `json:"manifestDigest"`
+	FindingsDigest    string    `json:"findingsDigest"`
 	AuditDigest       string    `json:"auditDigest"`
 	RuleSetVersion    string    `json:"ruleSetVersion"`
 	IssuedBy          string    `json:"issuedBy"`
