@@ -3,7 +3,6 @@ package store
 import (
 	"encoding/json"
 	"fmt"
-	"os"
 	"tape-preservation-gate/internal/domain"
 )
 
@@ -78,8 +77,14 @@ func (r *Repository) Commit(req CommitRequest) (CommitResult, error) {
 		return CommitResult{}, fmt.Errorf("写入快照: %w", err)
 	}
 	if err := appendAudit(r.auditPath, event); err != nil {
-		// 快照已提交但审计镜像失败时，删除快照会使故障显式暴露，避免静默接受不完整提交。
-		_ = os.Remove(r.snapshotPath)
+		// 快照已被覆盖为本次提交状态，而审计追加失败。为使重启回到本次提交前的状态，
+		// 用仍在内存中的提交前状态 r.state 重建快照与审计介质，丢弃追加可能留下的半成品。
+		if rerr := atomicJSON(r.snapshotPath, r.state); rerr != nil {
+			return CommitResult{}, fmt.Errorf("审计追加失败后回滚快照: %w (原审计错误: %v)", rerr, err)
+		}
+		if rerr := rewriteAudit(r.auditPath, r.state.Audit); rerr != nil {
+			return CommitResult{}, fmt.Errorf("审计追加失败后回滚审计介质: %w (原审计错误: %v)", rerr, err)
+		}
 		return CommitResult{}, err
 	}
 	r.state = next
