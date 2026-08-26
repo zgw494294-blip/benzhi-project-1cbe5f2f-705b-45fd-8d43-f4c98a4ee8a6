@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>磁带数字化质量验收工作台</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div><span class="eyebrow">声音档案保存</span><h1>磁带数字化质量验收工作台</h1></div>
+    <div id="health" class="status">正在连接…</div>
+  </header>
+  <main class="layout">
+    <aside class="queue" aria-label="批次队列">
+      <div class="section-title"><h2>验收批次</h2><button id="refresh" class="quiet">刷新</button></div>
+      <div id="batch-list" class="batch-list"></div>
+      <form id="create-form" class="card compact">
+        <h3>创建批次</h3>
+        <label>批次标题<input name="title" required value="口述史磁带验收"></label>
+        <label>操作员<input name="operator" required value="operator-a"></label>
+        <label>复核员<input name="reviewer" required value="reviewer-b"></label>
+        <button type="submit">创建并进入</button>
+      </form>
+    </aside>
+    <section class="workspace">
+      <div id="empty" class="empty"><h2>选择或创建批次</h2><p>工作台会按唯一验收状态机展示当前可执行的动作。</p></div>
+      <div id="detail" hidden>
+        <section class="hero card">
+          <div><span id="batch-state" class="pill"></span><h2 id="batch-title"></h2><p id="batch-meta" class="muted"></p></div>
+          <div><strong id="batch-version"></strong><small>当前版本</small></div>
+        </section>
+        <div id="notice" class="notice" role="status" tabindex="-1" hidden></div>
+        <nav class="steps" aria-label="验收步骤">
+          <button data-panel="intake">1 载体检查</button><button data-panel="capture">2 采集检测</button><button data-panel="findings">3 缺陷处置</button><button data-panel="review">4 专业复核</button><button data-panel="certificate">5 保存凭据</button>
+        </nav>
+
+        <section id="panel-intake" class="panel">
+          <div class="grid two">
+            <form id="carrier-form" class="card">
+              <h3>登记载体与节目段</h3>
+              <label>档案号<input name="archiveCode" required placeholder="TAPE-2026-001"></label>
+              <label>载体格式<input name="format" required value="1/4 inch open reel"></label>
+              <label>载体时长（毫秒）<input name="durationMillis" type="number" min="1" required value="60000"></label>
+              <div class="section-title"><strong>节目段时间轴</strong><button type="button" id="add-segment" class="quiet small">增加节目段</button></div>
+              <div id="segment-rows" class="repeat-rows"></div>
+              <div id="timeline-preview" class="timeline-preview muted">填写时间范围后显示时间轴预检。</div>
+              <label>备注<textarea name="notes"></textarea></label>
+              <button type="submit">登记载体</button>
+            </form>
+            <form id="inspection-form" class="card">
+              <h3>盘前安全检查</h3>
+              <label>载体<select name="carrierID" required></select></label>
+              <div class="checks"><label><input type="checkbox" name="appearanceOK" checked> 外观完整</label><label><input type="checkbox" name="hubOK" checked> 盘芯正常</label><label><input type="checkbox" name="leaderOK" checked> 引带正常</label><label><input type="checkbox" name="mold"> 存在霉变</label><label><input type="checkbox" name="sticky"> 存在粘连</label></div>
+              <label>检查人<input name="checkedBy" required value="operator-a"></label>
+              <label>检查意见<textarea name="comment"></textarea></label>
+              <button type="submit">保存检查 / 复检</button>
+              <fieldset id="treatment-fields">
+                <legend>阻断风险处置</legend>
+                <label>风险代码（逗号分隔）<input name="riskCodes" placeholder="MOLD, STICKY_SHED"></label>
+                <label>处置方式<input name="treatmentMethod" placeholder="隔离清洁"></label>
+                <label>处置说明<textarea name="treatmentDescription" placeholder="说明实际采取的受控处置"></textarea></label>
+                <label>执行人<input name="executedBy" value="operator-a"></label>
+                <button type="button" id="save-treatment" class="secondary">先登记风险处置</button>
+              </fieldset>
+              <button type="button" id="freeze-plan" class="secondary">确认并冻结采集计划</button>
+            </form>
+          </div>
+          <div id="carrier-table" class="card"></div>
+        </section>
+
+        <section id="panel-capture" class="panel" hidden>
+          <div class="grid two">
+            <form id="capture-form" class="card wide-card">
+              <div class="section-title"><h3>冻结计划批量采集</h3><button type="button" id="add-capture" class="quiet small">增加定向重采行</button></div>
+              <div id="capture-rows" class="repeat-rows"></div>
+              <button type="submit">原子提交全部采集行</button>
+              <button type="button" id="run-quality" class="secondary">运行确定性质量检测</button>
+            </form>
+            <div id="capture-table" class="card"></div>
+          </div>
+        </section>
+
+        <section id="panel-findings" class="panel" hidden>
+          <div id="finding-list" class="card"></div>
+          <form id="resolution-form" class="card">
+            <h3>质量缺陷处置</h3>
+            <label>缺陷<select name="findingID" required></select></label>
+            <label>动作<select name="action"><option value="replace">blocking：比较定向重采证据</option><option value="accept_warning">warning：确认接受</option></select></label>
+            <label>替代采集轮次<select name="replacementRunID"><option value="">告警确认无需选择</option></select></label>
+            <label>受控原因代码<select name="reasonCode"><option value="EXPECTED_CONTENT">EXPECTED_CONTENT</option><option value="SOURCE_CHARACTERISTIC">SOURCE_CHARACTERISTIC</option><option value="ARCHIVAL_CONTEXT">ARCHIVAL_CONTEXT</option><option value="TECHNICAL_LIMITATION">TECHNICAL_LIMITATION</option><option value="DOCUMENTED_EXCEPTION">DOCUMENTED_EXCEPTION</option></select></label>
+            <label>处置 / 确认说明<textarea name="resolution" required>完成定向重采并核对替代证据</textarea></label>
+            <button type="submit">提交缺陷处置</button>
+          </form>
+        </section>
+
+        <section id="panel-review" class="panel" hidden>
+          <div class="grid two">
+            <div class="card"><h3>提交完整性与整改闭环</h3><ul id="problems"></ul><div id="remediation-inputs"></div><button id="submit-review">提交专业复核</button></div>
+            <form id="review-form" class="card">
+              <h3>复核决定</h3>
+              <label>结论<select name="decision"><option value="approved">通过</option><option value="returned">退回整改</option></select></label>
+              <label>退回原因（每行：代码 | 问题说明 | 责任人）<textarea name="reasons" placeholder="SIGNAL_RECHECK | 掉音证据需要复查 | operator-a"></textarea></label>
+              <label>复核意见<textarea name="comment">保存文件及质量结论符合要求</textarea></label>
+              <button type="submit">提交复核决定</button>
+            </form>
+          </div>
+          <div id="review-history" class="card"></div>
+        </section>
+
+        <section id="panel-certificate" class="panel" hidden>
+          <div class="grid two">
+            <div class="card"><h3>保存包封存</h3><p>复核通过后冻结文件清单、质量结论及审计摘要。每个批次只签发一次。</p><button id="issue-certificate">签发不可变验收凭据</button></div>
+            <div class="card"><h3>独立核验</h3><button id="verify-certificate" class="secondary">重新计算并核验摘要</button><pre id="verification"></pre></div>
+          </div>
+          <div id="certificate-view" class="card"></div>
+          <details class="card"><summary>审计摘要链</summary><div id="audit-list"></div></details>
+        </section>
+      </div>
+    </section>
+  </main>
+  <script src="/static/app.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+{
+  "projectName": "tape-preservation-gate",
+  "interfaceKind": "web_ui",
+  "language": "Go",
+  "generationGate": {
+    "localPersistence": true,
+    "minimumDistinctHTTPEndpoints": 10,
+    "minimumCompleteBusinessFeatures": 3,
+    "webInterfaceOperatesCoreBusiness": true
+  },
+  "requiredFlow": [
+    "创建批次并登记载体",
+    "完成盘前检查并冻结采集计划",
+    "登记采集轮次并运行质量规则",
+    "通过定向重采证据处置缺陷",
+    "提交专业复核并支持退回整改",
+    "封存保存包并核验验收凭据"
+  ],
+  "persistence": {
+    "snapshot": "带 schemaVersion 的本地 JSON",
+    "audit": "带前序摘要的 JSON Lines 审计链",
+    "concurrency": "expectedVersion 与持久化 Idempotency-Key"
+  }
+}
