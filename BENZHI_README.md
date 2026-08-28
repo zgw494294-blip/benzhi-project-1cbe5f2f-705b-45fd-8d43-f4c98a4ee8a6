@@ -1,6 +1,6 @@
 # BENZHI_README
 
-基于 Go 实现的tape-preservation-gate Web 项目，一款后端服务，用于支持tape-preservation-gate的核心业务流程。
+基于 Go 实现的磁带数字化质量验收 Web 项目，一款后端服务，用于管理磁带载体检查、采集检测、缺陷重采和保存包封存。
 
 ## 项目说明
 - 项目：benzhi-project-1cbe5f2f-705b-45fd-8d43-f4c98a4ee8a6
